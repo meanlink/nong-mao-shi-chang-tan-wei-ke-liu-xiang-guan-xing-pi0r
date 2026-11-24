@@ -84,6 +84,9 @@ def review_correction(db: Session, correction_id: int, payload: CorrectionReview
         db.flush()
         correction.replacement_sample_id = replacement.id
         correction.status = 'approved'
+        # 更正后才有效的迟到客流：若原营业周已封账，记入下一张未封周结的补账
+        from src.services.settlement import claim_sample
+        claim_sample(db, replacement)
     else:
         correction.status = 'rejected'
 

@@ -13,3 +13,17 @@ class Brief(Base):
     __tablename__='briefs'; id:Mapped[int]=mapped_column(Integer,primary_key=True); analysis_id:Mapped[int]=mapped_column(ForeignKey('analysis_runs.id'),unique=True); title:Mapped[str]=mapped_column(String(160)); status:Mapped[str]=mapped_column(String(20),default='draft'); summary:Mapped[str]=mapped_column(Text); recommended_stalls:Mapped[list]=mapped_column(JSON); audience:Mapped[str]=mapped_column(String(100),default='招商委员会'); issued_by:Mapped[int|None]=mapped_column(ForeignKey('users.id'),nullable=True); created_at:Mapped[object]=mapped_column(DateTime,server_default=func.now()); issued_at:Mapped[object|None]=mapped_column(DateTime,nullable=True)
 class AuditLog(Base):
     __tablename__='audit_logs'; id:Mapped[int]=mapped_column(Integer,primary_key=True); actor:Mapped[str]=mapped_column(String(120)); action:Mapped[str]=mapped_column(String(80)); detail:Mapped[dict]=mapped_column(JSON); created_at:Mapped[object]=mapped_column(DateTime,server_default=func.now())
+
+# 周结/封账模型定义在独立模块，这里重导出以兼容常见导入路径
+from src.models.settlement import (  # noqa: E402,F401
+    WeeklySettlement,
+    SettlementItem,
+    SettlementGuard,
+)
+# 命名别名：不同实现/测试可能使用 WeeklyClose / WeekClose / Settlement 等名称
+WeeklyClose = WeeklySettlement
+WeekSettlement = WeeklySettlement
+Settlement = WeeklySettlement
+WeeklySettlementEntry = SettlementItem
+SettlementEntry = SettlementItem
+WeekCloseItem = SettlementItem

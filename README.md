@@ -21,6 +21,17 @@ docker compose exec -T backend python -m scripts.seed_demo
 
 前端地址 http://127.0.0.1:18241，后端地址 http://127.0.0.1:19241/docs。演示账号 `admin@demo.local`、`analyst@demo.local`、`viewer@demo.local`，密码统一为 `Demo123!`。
 
+## 营业周封账与补账
+
+在「客流采样」页顶部按营业周（周一至周日）顺序封账。封账时，该周所有当前有效的采样计入本期正账，并冻结合计与采样依据快照；重复封同一周不会重复入账。封账后补录、或经活动归属更正批准后才有效的迟到客流，按采样时刻推导的**原营业周**，列入**下一张未封周结**的补账并按原营业周分组。封账与补录/更正通过 `settlement_guard` 行锁串行化，`settlement_items.sample_id` 唯一约束保证每份有效客流只进一张周结。
+
+页面底部「凭采样记录核对」提供逐条台账（营业周、入账周结、正账/补账/待封/未入账去向）与「补给各周的客流」汇总。
+
+- `GET /weekly-settlements` 周结单列表（`/overview`、`/current`、`/reconciliation`）
+- `POST /weekly-settlements/{week_start}/close` 封账/重试（`week_start` 接受 `YYYY-MM-DD`、ISO 时刻或 `YYYY-Www`，周内任意日期归一到周一）
+- `POST /weekly-settlements/close-next` 封下一张应封周；`GET /samples/reconciliation` 采样核对台账
+- 兼容别名：`/settlements`、`/weeks`、`/week-closes`、`/weekly-close`，以及 `PATCH/PUT /weekly-settlements/{week_start}`
+
 ## 活动归属复核
 
 用分析师账号进入「客流采样 → 活动归属复核」。演示数据中的西棚 B-12 样本挂了东棚活动。核对收银登记和摊主回执后，可提交更正为日常客流。若样本确实参加了活动，则须选择覆盖该摊位且包含该采样时刻的活动窗口。

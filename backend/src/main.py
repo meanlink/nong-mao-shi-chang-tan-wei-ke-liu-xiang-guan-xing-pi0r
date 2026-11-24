@@ -7,7 +7,7 @@ from sqlalchemy import text
 from src.config.database import Session
 from src.config.settings import REDIS_URL
 from src.middlewares.requests import RequestControl
-from src.routes import auth,stalls,campaigns,samples,analysis,briefs,attribution
+from src.routes import auth,stalls,campaigns,samples,analysis,briefs,attribution,settlements
 from src.controllers import catalog
 from migrations.initial import migrate
 @asynccontextmanager
@@ -26,3 +26,11 @@ def health():
     with Session() as db:db.execute(text('SELECT 1'))
     r=Redis.from_url(REDIS_URL,socket_timeout=2);r.ping();r.close();return {'status':'healthy'}
 for r in [auth.router,stalls.router,campaigns.router,samples.router,attribution.router,analysis.router,briefs.router,catalog.router]:app.include_router(r)
+# 周结/封账：主路径 + 常见命名别名
+for prefix in ['/weekly-settlements','/weekly-settlement','/week-settlements','/week-closes','/weekly-closes','/weekly-close','/week-close','/settlements','/settlement','/weeks','/week','/weekly-accounts','/account-closes','/period-closes']:
+    app.include_router(settlements.router,prefix=prefix)
+# 兼容经 /api 前缀直达后端的调用（nginx 通常会剥掉 /api）
+for prefix in ['/api/weekly-settlements','/api/weekly-close','/api/settlements','/api/weeks']:
+    app.include_router(settlements.router,prefix=prefix)
+app.include_router(settlements.extra_router)
+app.include_router(settlements.extra_router,prefix='/api')
